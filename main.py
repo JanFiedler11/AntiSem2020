@@ -15,6 +15,39 @@ from sklearn.metrics import f1_score
 
 gold_data='hackathon.json'
 
+''' This will be the function to save the predections of the model at some point
+    def save_predictions_toFile():
+    panda_pre_test=[]
+    for x in range(len(y_predict)):
+        print(x_test.iloc[x],y_test.iloc[x],y_predict[x])
+        panda_pre_test.append([x_test.iloc[x],y_test.iloc[x],y_predict[x]])
+        panda_pre_test.append([clean_data['Text'][x],clean_data['Label'][x],y_predict[x]])
+        
+
+
+    panda_test=pd.DataFrame(panda_pre_test,columns=["Tweet_Text","annotation","Prediction"])
+    panda_test.to_csv("csv/prediction.csv")
+'''
+'''
+save the best model based on the f1 score to a pickle file
+'''
+def save_best_model(train_upsampled,pipeline,iterations,filepath):
+    best=0
+    for _ in range(iterations):
+        x_train,x_test,y_train,y_test=train_test_split(train_upsampled['Text'],train_upsampled['Label'],test_size=0.1)
+        model=pipeline.fit(x_train,y_train)
+        y_predict=model.predict(x_test)
+
+        f1=f1_score(y_test,y_predict,pos_label="1")
+        if f1>best:
+            best=f1
+            with open(filepath,"wb") as f:
+                pickle.dump(model,f)
+        
+    print(best)
+    
+
+
 '''
 clean the text data from @users, emojis and other stuff
 '''
@@ -71,12 +104,12 @@ if __name__ == "__main__":
 
     #clean
     clean_data=f_clean_data(data,"Text")
-    clean_unlabeled=f_clean_data(unlabeled,"Text")
+    #clean_unlabeled=f_clean_data(unlabeled,"Text")
 
     clean_data=apply_binary_label(clean_data,"Label")
     
     #generate debug files
-    clean_data.to_csv('csv/clean_data.csv')
+    #clean_data.to_csv('csv/clean_data.csv')
 
     #they are like 100 more antisemtic tweets than not antisemitic. Thats why we are upsampling the minority.
     train_majority=clean_data[clean_data.Label=="0"]
@@ -85,42 +118,24 @@ if __name__ == "__main__":
     train_minority_upsampled=resample(train_minority,replace=True,n_samples=len(train_majority),random_state=123)
     train_upsampled=pd.concat([train_minority_upsampled,train_majority])
 
+    #how much samples we have in total after upsampling
     #print(train_upsampled['Label'].value_counts())
+
     x_train,x_test,y_train,y_test=train_test_split(train_upsampled['Text'],train_upsampled['Label'],test_size=0.1)
     pipeline= Pipeline([('vect', CountVectorizer()),('tfidf', TfidfTransformer()),('nb', SGDClassifier()),])
     
-    '''best=0
-    for _ in range(500):
-        x_train,x_test,y_train,y_test=train_test_split(train_upsampled['Text'],train_upsampled['Label'],test_size=0.1)
-        model=pipeline.fit(x_train,y_train)
-        y_predict=model.predict(x_test)
+    #We can either let the model train live once
+    model=pipeline.fit(x_train,y_train)
 
-        f1=f1_score(y_test,y_predict,pos_label="1")
-        if f1>best:
-            best=f1
-            with open("best_model.pickle","wb") as f:
-                pickle.dump(model,f)
-        
-    print(best)
-    exit(0)'''
+    #Or save the model with the best f1 score (n iterations) and load it later 
+    #save_best_model(train_upsampled,pipeline,500,"best_model.pickle")
 
-    pickle_in=open("best_model.pickle","rb")
-    best_model=pickle.load(pickle_in)
-    #y_predict=best_model.predict(x_test)
-    y_predict=best_model.predict(clean_data['Text'])
+    #load the pickle if you want to use the best model
+    #pickle_in=open("best_model.pickle","rb")
+    #model=pickle.load(pickle_in)
+    
+    #predict the results
+    y_predict=model.predict(x_test)
 
-
-    panda_pre_test=[]
-    for x in range(len(y_predict)):
-        #print(x_test.iloc[x],y_test.iloc[x],y_predict[x])
-        #panda_pre_test.append([x_test.iloc[x],y_test.iloc[x],y_predict[x]])
-        panda_pre_test.append([clean_data['Text'][x],clean_data['Label'][x],y_predict[x]])
-        
-
-
-    panda_test=pd.DataFrame(panda_pre_test,columns=["Tweet_Text","annotation","Prediction"])
-    panda_test.to_csv("csv/prediction.csv")
-
-
-    #print(f1_score(y_test,y_predict,pos_label="1"))
-    print(f1_score(clean_data['Label'],y_predict,pos_label="1"))
+    print(f1_score(y_test,y_predict,pos_label="1"))
+   
