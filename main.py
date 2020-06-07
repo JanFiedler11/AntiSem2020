@@ -11,7 +11,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split
 
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score,accuracy_score
 
 gold_data='hackathon.json'
 
@@ -125,17 +125,31 @@ if __name__ == "__main__":
     pipeline= Pipeline([('vect', CountVectorizer()),('tfidf', TfidfTransformer()),('nb', SGDClassifier()),])
     
     #We can either let the model train live once
-    model=pipeline.fit(x_train,y_train)
+    #model=pipeline.fit(x_train,y_train)
 
     #Or save the model with the best f1 score (n iterations) and load it later 
     #save_best_model(train_upsampled,pipeline,500,"best_model.pickle")
 
     #load the pickle if you want to use the best model
-    #pickle_in=open("best_model.pickle","rb")
-    #model=pickle.load(pickle_in)
+    pickle_in=open("best_model.pickle","rb")
+    model=pickle.load(pickle_in)
     
+
     #predict the results
     y_predict=model.predict(x_test)
 
-    print(f1_score(y_test,y_predict,pos_label="1"))
-   
+    #print("F1 - Score: ",f1_score(y_test,y_predict,pos_label="1"))
+    #print("Accuracy: ",accuracy_score(y_test,y_predict))
+
+
+    #lets test the model with some unseen tweets with manual label
+    sheet_data=pd.read_csv("sheet.csv")
+    sheet_y=sheet_data['Label'].astype(str)
+    sheet_x=sheet_data['Text']
+
+    y_predict=model.predict(sheet_x)
+
+    print("F1 - Score: ",f1_score(sheet_y,y_predict,pos_label="1"))
+    print("Accuracy: ",accuracy_score(sheet_y,y_predict))
+
+
