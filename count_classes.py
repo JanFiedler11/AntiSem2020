@@ -1,7 +1,7 @@
 import json
 
 
-with open ("hackathon.json",'r') as read_file:
+with open ("group2.json",'r') as read_file:
     data=json.load(read_file)
 
 
@@ -12,7 +12,9 @@ score4=0
 score5=0
 some_score=0
 no_label=0
+k=0
 for i in data:
+    k=k+1
     try:
         score=i['antisemitism_rating']
         if(score=='1'):
@@ -37,4 +39,6 @@ print("Amount of tweets with ranking 5:",score5)
 
 print("-"*40)
 print("Amount of unlabeled data:",no_label)
+
+print("Total Data:",k)
 

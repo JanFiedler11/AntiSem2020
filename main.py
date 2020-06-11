@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import re
 import pickle
+import json
+import spacy
 from sklearn.utils import resample
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
@@ -14,6 +16,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score,accuracy_score
 
 gold_data='hackathon.json'
+jnlp_semantik_url='https://jnlp.semantic-tech.com/?text='
+jnlp_semantik_auth=('antisem2020',"6O1O;<JjA=,J#%+w(O&hc>I6_*&zoCe")
+
 
 ''' This will be the function to save the predections of the model at some point
     def save_predictions_toFile():
@@ -45,7 +50,30 @@ def save_best_model(train_upsampled,pipeline,iterations,filepath):
                 pickle.dump(model,f)
         
     print(best)
+
+'''
+remove stop words from tweets and apply lemmatization for 1 string
+'''
+def remove_stop_apply_lemma_for_string(text):
+    new_text=""
+    tokens=nlp(text)
+    for token in tokens:
+        if not token.is_stop:
+            new_text=new_text+" "+token.lemma_
     
+    return new_text
+
+'''
+remove stop words from tweets and apply lemmatization for 1 DataFrame
+'''
+def remove_stop_apply_lemma(df,field):
+    k=0
+    for i in df[field]:
+        if(k % 100==0):
+            print(".",end="",flush=True)
+        df[field][k]=remove_stop_apply_lemma_for_string(i)
+        k=k+1
+    return df
 
 
 '''
@@ -74,7 +102,7 @@ def apply_binary_label(df,field):
 '''
 split the gold standard from json into a panda dataframe
 '''
-def split_test_training_from_json(file):
+def pd_from_json(file):
     with open (file,'r') as read_file:
         json_data=json.load(read_file)
 
@@ -90,26 +118,34 @@ def split_test_training_from_json(file):
 
     panda_data=pd.DataFrame(pre_panda_data,columns=["Label","Text"])
     unlabeled_panda_data=pd.DataFrame(pre_unlabeled_panda_data,columns=["Text"])
-    print ("Amount of unlabeled data:",n_unlabeled)
+    #print ("Amount of unlabeled data:",n_unlabeled)
     return panda_data,unlabeled_panda_data
 
 
 if __name__ == "__main__":
+    #Loading Spacy
+    nlp=spacy.load('en_core_web_sm')
+
     #getting the tweets with labeled in data frame 
-    data,unlabeled=split_test_training_from_json(gold_data)
+    data,unlabeled=pd_from_json(gold_data)
 
     #generate debug files
     #training_data.to_csv('csv/training_data.csv')
     #test_data.to_csv('csv/test_data.csv')
 
     #clean
+    print("Cleaning data from @ , Emojis and Stuff")
     clean_data=f_clean_data(data,"Text")
+    
+    print("Removing Stop Words and applying lemmatization")
+    clean_data=remove_stop_apply_lemma(clean_data,"Text")
     #clean_unlabeled=f_clean_data(unlabeled,"Text")
 
     clean_data=apply_binary_label(clean_data,"Label")
     
     #generate debug files
     #clean_data.to_csv('csv/clean_data.csv')
+    #test_filter.to_csv('csv/clean_data_filtered.csv')
 
     #they are like 100 more antisemtic tweets than not antisemitic. Thats why we are upsampling the minority.
     train_majority=clean_data[clean_data.Label=="0"]
@@ -125,11 +161,11 @@ if __name__ == "__main__":
     pipeline= Pipeline([('vect', CountVectorizer()),('tfidf', TfidfTransformer()),('nb', SGDClassifier()),])
     
     #We can either let the model train live once
-    #model=pipeline.fit(x_train,y_train)
+    model=pipeline.fit(x_train,y_train)
 
     #Or save the model with the best f1 score (n iterations) and load it later 
-    #save_best_model(train_upsampled,pipeline,500,"best_model.pickle")
-
+    #save_best_model(train_upsampled,pipeline,1000,"best_model.pickle")
+    
     #load the pickle if you want to use the best model
     pickle_in=open("best_model.pickle","rb")
     model=pickle.load(pickle_in)
@@ -138,18 +174,43 @@ if __name__ == "__main__":
     #predict the results
     y_predict=model.predict(x_test)
 
-    #print("F1 - Score: ",f1_score(y_test,y_predict,pos_label="1"))
-    #print("Accuracy: ",accuracy_score(y_test,y_predict))
+    print("Data from test gold standard","-"*40)
+    print("F1 - Score: ",f1_score(y_test,y_predict,pos_label="1"))
+    print("Accuracy: ",accuracy_score(y_test,y_predict))
+    print("-"*60)
 
 
     #lets test the model with some unseen tweets with manual label
-    sheet_data=pd.read_csv("sheet.csv")
+    sheet_data=pd.read_csv("sheet.tsv",sep="\t",header=0)
+
+    sheet_data=f_clean_data(sheet_data,'Text')
+    sheet_data=remove_stop_apply_lemma(sheet_data,'Text')
     sheet_y=sheet_data['Label'].astype(str)
     sheet_x=sheet_data['Text']
-
+    
     y_predict=model.predict(sheet_x)
 
+    print("Data from csv sheet","-"*40)
     print("F1 - Score: ",f1_score(sheet_y,y_predict,pos_label="1"))
     print("Accuracy: ",accuracy_score(sheet_y,y_predict))
+    print("-"*60)
 
+    #lets test the model with unseen tweets from the datathon - annotation might not be 100 % right
 
+    group_data,_=pd_from_json('group2.json')
+    group_data=apply_binary_label(group_data,'Label')
+
+    group_data=f_clean_data(group_data,'Text')
+    group_data=remove_stop_apply_lemma(group_data,'Text')
+
+    group_y=group_data['Label']
+    group_x=group_data['Text']
+
+    
+
+    y_predict=model.predict(group_x)
+
+    print("Data from group2 json","-"*40)
+    print("F1 - Score: ",f1_score(group_y,y_predict,pos_label="1"))
+    print("Accuracy: ",accuracy_score(group_y,y_predict))
+    print("-"*60)
