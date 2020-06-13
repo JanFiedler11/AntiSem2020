@@ -1,7 +1,7 @@
 import json
 
 
-with open ("group2.json",'r') as read_file:
+with open ("all.json",'r') as read_file:
     data=json.load(read_file)
 
 
