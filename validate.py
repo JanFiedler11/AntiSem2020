@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
 
     #lets test the model with some unseen tweets with manual label
-    sheet_data=pd.read_csv("sheet.tsv",sep="\t",header=0)
+    sheet_data=pd.read_csv("input_data/sheet.tsv",sep="\t",header=0)
 
     sheet_data=f_clean_data(sheet_data,'Text')
     sheet_data=remove_stop_apply_lemma(sheet_data,'Text')
@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
     #lets test the model with unseen tweets from the datathon - annotation might not be 100 % right
 
-    group_data,_=pd_from_json('group2.json')
+    group_data,_=pd_from_json('input_data/group2.json')
     group_data=apply_binary_label(group_data,'Label')
 
     group_data=f_clean_data(group_data,'Text')
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     print("-"*60)
 
 
-    gold_data,_=pd_from_json('hackathon.json')
+    gold_data,_=pd_from_json('input_data/hackathon.json')
     gold_data=apply_binary_label(gold_data,'Label')
 
     gold_data=f_clean_data(gold_data,'Text')

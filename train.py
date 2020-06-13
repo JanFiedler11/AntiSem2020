@@ -112,7 +112,7 @@ if __name__ == "__main__":
     nlp=spacy.load('en_core_web_sm')
 
     #getting the tweets with labeled in data frame 
-    data,_=pd_from_json('all.json')
+    data,_=pd_from_json('input_data/all.json')
 
     
     print("Cleaning data from @ , Emojis and Stuff")
