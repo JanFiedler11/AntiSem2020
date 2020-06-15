@@ -138,18 +138,18 @@ if __name__ == "__main__":
     #print(train_upsampled['Label'].value_counts())
     train_upsampled=shuffle(train_upsampled)
 
-    x_train,x_test,y_train,y_test=train_test_split(train_upsampled['Text'],train_upsampled['Label'],test_size=0.1)
+    x_train,x_test,y_train,y_test=train_test_split(train_upsampled['Text'],train_upsampled['Label'],test_size=0.2)
     pipeline= Pipeline([('vect', CountVectorizer()),('tfidf', TfidfTransformer()),('nb', SGDClassifier()),])
     
     #We can either let the model train live once
-    #model=pipeline.fit(x_train,y_train)
+    model=pipeline.fit(x_train,y_train)
 
     #Or save the model with the best f1 score (n iterations) and load it later 
-    save_best_model(train_upsampled,pipeline,1000,"best_model.pickle")
+    #save_best_model(train_upsampled,pipeline,1000,"best_model.pickle")
     
     #load the pickle if you want to use the best model
-    pickle_in=open("best_model.pickle","rb")
-    model=pickle.load(pickle_in)
+    #pickle_in=open("best_model.pickle","rb")
+    #model=pickle.load(pickle_in)
     
 
     #predict the results
