@@ -136,10 +136,11 @@ if __name__ == "__main__":
 
     #how much samples we have in total after upsampling
     #print(train_upsampled['Label'].value_counts())
+
     train_upsampled=shuffle(train_upsampled)
 
     x_train,x_test,y_train,y_test=train_test_split(train_upsampled['Text'],train_upsampled['Label'],test_size=0.2)
-    pipeline= Pipeline([('vect', CountVectorizer()),('tfidf', TfidfTransformer()),('nb', SGDClassifier()),])
+    pipeline=Pipeline([('vect', CountVectorizer()),('tfidf', TfidfTransformer()),('nb', SGDClassifier()),])
     
     #We can either let the model train live once
     model=pipeline.fit(x_train,y_train)
@@ -160,6 +161,5 @@ if __name__ == "__main__":
     print("Accuracy: ",accuracy_score(y_test,y_predict))
     print("-"*60)
 
-    exit(0)
 
     

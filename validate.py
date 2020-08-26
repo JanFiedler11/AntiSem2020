@@ -113,20 +113,6 @@ if __name__ == "__main__":
     pickle_in=open("best_model.pickle","rb")
     model=pickle.load(pickle_in)
 
-
-    '''while True:
-        read_in_data=[]
-        my_input=input("Enter a Text\n")
-        read_in_data.append([my_input])
-        input_data=pd.DataFrame(read_in_data,columns=['Text'])
-        input_data=f_clean_data(input_data,'Text')
-        input_data=remove_stop_apply_lemma(input_data,'Text')
-        input_data_x=input_data['Text']
-
-        print(model.predict(input_data_x))'''
-
-
-
     #lets test the model with some unseen tweets with manual label
     sheet_data=pd.read_csv("input_data/sheet.tsv",sep="\t",header=0)
 
