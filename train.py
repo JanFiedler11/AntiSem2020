@@ -129,7 +129,7 @@ if __name__ == "__main__":
     #print(train_majority['Label'].value_counts())
     #print(train_minority['Label'].value_counts())
     
-    #they are like 1200 more antisemtic tweets than not antisemitic. Thats why we are upsampling the minority.
+    #they are like 1200 more antisemitic tweets than not antisemitic. Thats why we are upsampling the minority.
     
     train_minority_upsampled=resample(train_minority,replace=True,n_samples=len(train_majority),random_state=123)
     train_upsampled=pd.concat([train_minority_upsampled,train_majority])
